@@ -2,18 +2,14 @@
 # nuitka-project: --enable-plugin=pyside6
 # nuitka-project: --include-qt-plugins=qml
 # nuitka-project: --windows-icon-from-ico=icon.ico
-# nuitka-project: --onefile-windows-splash-screen-image={MAIN_DIRECTORY}/splash.png
 # nuitka-project: --file-version=1.0
 # nuitka-project: --company-name=KabanTechnologies
 # nuitka-project: --product-name=TGNote
 # nuitka-project: --disable-console
 #
-# Поддерживает splash. Без него - юзай --mingw64
-# nuitka-project: --msvc=latest
+# nuitka-project: --mingw64=latest
 
-import os
 import random
-import tempfile
 import threading
 import time
 import tkinter as tk
@@ -23,10 +19,9 @@ from dotenv import dotenv_values
 from interception import auto_capture_devices, press
 from PIL import Image
 from pyautogui import ImageNotFoundException, locate, screenshot
-from pyrogram import Client
-from pytimedinput import timedKey
-from requests import get
 from pynput import keyboard
+from pyrogram import Client
+from requests import get
 
 auto_capture_devices(keyboard=True, mouse=True)
 
@@ -40,13 +35,12 @@ message_voice_list = [
     "/s Застелил кровать, <[500]> пора убивать",
     "/s Н+оу каб+анас, <[500]> си, <[500]> сеньёре",
 ]
-
-
-
-#   Функции основной программы.
+timeout_splash = 10
+timeout_search = 5
 
 
 def wait_and_accept_several_buttons():
+    """Поиск кнопок и подтверждение нажатия."""
     buttons = ["button1.png", "button2.png", "button3.png"]
     while 1:
         temp_scr = screenshot()
@@ -69,7 +63,7 @@ def wait_and_accept_several_buttons():
                 pass
         print("Waitin for proc...")
         print("Alice is enabled: ", enable_alice)
-        time.sleep(5)
+        time.sleep(timeout_search)
 
 
 def send_txt_msg():
@@ -82,25 +76,26 @@ def send_txt_msg():
 
 
 def mainfunc():
+    """Функция для отдельного от трея потока."""
     wait_and_accept_several_buttons()
     send_txt_msg()
     exit_flag.set()
 
 
-#   Функции трея.
-
-
 def on_click_alice(icon, item):
+    """Переключатель Алисы в трее."""
     global enable_alice
     enable_alice = not item.checked
 
 
 def on_click_exit(icon, item):
+    """Трей клик - Выход."""
     icon.stop()
     exit_flag.set()
 
 
 def trayfunc():
+    """Функции трея."""
     global enable_alice
     tray = pystray.Icon(
         "TGNote",
@@ -117,9 +112,6 @@ def trayfunc():
     tray.run()
 
 
-# Функция оповещения Алисы.
-
-
 def send_voice_msg():
     """Звуковое оповещение на колонку Алиса."""
     app = Client(config["CLIENT_NAME"], config["ACC_ID"], config["ACC_HASH"])
@@ -132,74 +124,59 @@ def send_voice_msg():
     print("sound sent")
 
 
-#   Функции инициализации.
+class splash(tk.Tk):
+    """Класс сплеш-арта вызываемый при запуске."""
 
+    def __init__(self):
+        key_listener_thread = threading.Thread(target=self.key_checker, daemon=True)
+        key_listener_thread.start()
 
-# ===================================================================================================================================
-def leave_splash(root):
-    choice_was_made_flag.set()
-    root.destroy()
+        tk.Tk.__init__(self)
+        # disable the window bar
+        self.overrideredirect(True)
+        # set trasparency and make the window stay on top
+        self.attributes("-transparentcolor", "gray8", "-topmost", True)
+        # set the background image
+        self.psg = tk.PhotoImage(file="splash.png")
+        self.label = tk.Label(self, bg="gray8", image=self.psg)
+        self.label.pack()
+        # move the window to center
+        self.eval("tk::PlaceWindow . Center")
+        self.leave_splash()
 
-def splash():
-    # create the main window
-    root = tk.Tk()
+    def leave_splash(self):
+        if choice_was_made_flag.is_set():
+            self.destroy()
+        else:
+            self.after(500, self.leave_splash)
 
-    # disable the window bar
-    root.overrideredirect(1)
+    def on_press(self, key):
+        global enable_alice
+        try:
+            key_pressed = key.char
+            if key_pressed == "1":
+                enable_alice = False
+                choice_was_made_flag.set()
+            elif key_pressed == "2":
+                enable_alice = True
+                choice_was_made_flag.set()
+        except:
+            pass
 
-    # set trasparency and make the window stay on top
-    root.attributes('-transparentcolor', 'gray8', '-topmost', True)
-
-    # set the background image
-    psg = tk.PhotoImage(file='splash.png')
-    tk.Label(root, bg='gray8', image=psg).pack()
-
-    # move the window to center
-    root.eval('tk::PlaceWindow . Center')
-
-    # schedule the window to close after 4 seconds
-    root.after(10000, leave_splash, root)
-
-    # run the main loop
-    root.mainloop()
-
-def on_press(key):
-    global enable_alice
-    try:
-        key_pressed = key.char
-        if key_pressed == '1':
-            enable_alice = False
-            choice_was_made_flag.set()
-        elif key_pressed == "2":
-            print('aqweqwe')
-            enable_alice = True
-            choice_was_made_flag.set()
-    except:
-        pass
-
-def key_checker():
-    listener = keyboard.Listener(on_press=on_press)
-    listener.start()
-    choice_was_made_flag.wait()
-    listener.stop()
-
-
-# ===================================================================================================================================
-
-
-# Основная программа.
+    def key_checker(self):
+        listener = keyboard.Listener(on_press=self.on_press)
+        t = threading.Timer(timeout_splash, choice_was_made_flag.set)
+        listener.start()
+        t.start()
+        choice_was_made_flag.wait()
+        listener.stop()
 
 
 if __name__ == "__main__":
     choice_was_made_flag = threading.Event()
     enable_alice = False
-    thread_splash = threading.Thread(target=splash, daemon=True)
-    thread_splash.start()
-
-    key_listener_thread = threading.Thread(target=key_checker, daemon=True)
-    key_listener_thread.start()
-
-    choice_was_made_flag.wait()
+    spl = splash()
+    spl.mainloop()
 
     exit_flag = threading.Event()
 

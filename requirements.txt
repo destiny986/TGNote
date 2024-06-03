@@ -5,5 +5,4 @@ pyrogram
 python-dotenv
 requests
 pywin32
-pytimedinput
 pystray
