@@ -16,7 +16,7 @@ import tkinter as tk
 
 import pystray
 from dotenv import dotenv_values
-from interception import auto_capture_devices, press
+from interception import auto_capture_devices, key_up, key_down
 from PIL import Image
 from pyautogui import ImageNotFoundException, locate, screenshot
 from pynput import keyboard
@@ -39,6 +39,13 @@ timeout_splash = 10
 timeout_search = 5
 
 
+def random_click(key):
+    key_down(key)
+    time.sleep(random.uniform(0.2, 0.8))
+    key_up(key)
+    return
+
+
 def wait_and_accept_several_buttons():
     """Поиск кнопок и подтверждение нажатия."""
     buttons = ["button1.png", "button2.png", "button3.png"]
@@ -48,12 +55,12 @@ def wait_and_accept_several_buttons():
             try:
                 locate(button, temp_scr, confidence=0.8)
                 if button == "button1.png":
-                    press("f12")
+                    random_click("f12")
                     print("Proc found!")
                     print("Alice is enabled: ", enable_alice)
                     return
                 elif button == "button2.png":
-                    press("f12")
+                    random_click("f12")
                     print("Accept button found. Confirmed.")
                 elif button == "button3.png":
                     print("Proc found!")
