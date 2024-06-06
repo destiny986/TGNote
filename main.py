@@ -61,24 +61,27 @@ def wait_and_accept_several_buttons():
         os.path.join(os.path.dirname(__file__), "data/button3.png"),
     ]
     while 1:
-        temp_scr = screenshot()
-        for button in buttons:
-            try:
-                locate(button, temp_scr, confidence=0.8)
-                if button == buttons[0]:
-                    random_click("f12")
-                    print("Proc found!")
-                    print("Alice is enabled: ", enable_alice)
-                    return
-                elif button == buttons[1]:
-                    random_click("f12")
-                    print("Accept button found. Confirmed.")
-                elif button == buttons[2]:
-                    print("Proc found!")
-                    print("Alice is enabled: ", enable_alice)
-                    return
-            except (ImageNotFoundException, OSError):
-                pass
+        try:
+            temp_scr = screenshot()
+            for button in buttons:
+                try:
+                    locate(button, temp_scr, confidence=0.8)
+                    if button == buttons[0]:
+                        random_click("f12")
+                        print("Proc found!")
+                        print("Alice is enabled: ", enable_alice)
+                        return
+                    elif button == buttons[1]:
+                        random_click("f12")
+                        print("Accept button found. Confirmed.")
+                    elif button == buttons[2]:
+                        print("Proc found!")
+                        print("Alice is enabled: ", enable_alice)
+                        return
+                except ImageNotFoundException:
+                    pass
+        except OSError:
+            pass
         print("Waitin for proc...")
         print("Alice is enabled: ", enable_alice)
         time.sleep(timeout_search)
