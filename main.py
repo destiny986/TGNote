@@ -1,31 +1,38 @@
+# nuitka-project: --mingw64
 # nuitka-project: --onefile
+# nuitka-project: --windows-console-mode=disable
+#
 # nuitka-project: --enable-plugin=pyside6
 # nuitka-project: --include-qt-plugins=qml
-# nuitka-project: --windows-icon-from-ico=icon.ico
+#
+# nuitka-project: --windows-icon-from-ico=data/icon.ico
 # nuitka-project: --file-version=1.0
 # nuitka-project: --company-name=KabanTechnologies
 # nuitka-project: --product-name=TGNote
-# nuitka-project: --disable-console
+# nuitka-project: --output-filename=TGNote
 #
-# nuitka-project: --mingw64=latest
+# nuitka-project: --enable-plugin=tk-inter
+# nuitka-project: --include-data-dir=data/={MAIN_DIRECTORY}/data
 
+
+import os
 import random
 import threading
 import time
 import tkinter as tk
 
-import pystray
 from dotenv import dotenv_values
-from interception import auto_capture_devices, key_up, key_down
+from interception import auto_capture_devices, key_down, key_up
 from PIL import Image
 from pyautogui import ImageNotFoundException, locate, screenshot
 from pynput import keyboard
 from pyrogram import Client
+from pystray import Icon, Menu, MenuItem
 from requests import get
 
 auto_capture_devices(keyboard=True, mouse=True)
 
-tray_icon = Image.open("icon.ico")
+tray_icon = Image.open(os.path.join(os.path.dirname(__file__), "data/icon.ico"))
 config = dotenv_values(".env")
 message_txt = "Прок прок прок!!!"
 message_voice_list = [
@@ -48,21 +55,25 @@ def random_click(key):
 
 def wait_and_accept_several_buttons():
     """Поиск кнопок и подтверждение нажатия."""
-    buttons = ["button1.png", "button2.png", "button3.png"]
+    buttons = [
+        os.path.join(os.path.dirname(__file__), "data/button1.png"),
+        os.path.join(os.path.dirname(__file__), "data/button2.png"),
+        os.path.join(os.path.dirname(__file__), "data/button3.png"),
+    ]
     while 1:
         temp_scr = screenshot()
         for button in buttons:
             try:
                 locate(button, temp_scr, confidence=0.8)
-                if button == "button1.png":
+                if button == buttons[0]:
                     random_click("f12")
                     print("Proc found!")
                     print("Alice is enabled: ", enable_alice)
                     return
-                elif button == "button2.png":
+                elif button == buttons[1]:
                     random_click("f12")
                     print("Accept button found. Confirmed.")
-                elif button == "button3.png":
+                elif button == buttons[2]:
                     print("Proc found!")
                     print("Alice is enabled: ", enable_alice)
                     return
@@ -104,16 +115,16 @@ def on_click_exit(icon, item):
 def trayfunc():
     """Функции трея."""
     global enable_alice
-    tray = pystray.Icon(
+    tray = Icon(
         "TGNote",
         tray_icon,
-        menu=pystray.Menu(
-            pystray.MenuItem(
+        menu=Menu(
+            MenuItem(
                 "Отправлять уведомления Алисе",
                 on_click_alice,
                 checked=lambda item: enable_alice,
             ),
-            pystray.MenuItem("Выход", on_click_exit),
+            MenuItem("Выход", on_click_exit),
         ),
     )
     tray.run()
@@ -144,7 +155,9 @@ class splash(tk.Tk):
         # set trasparency and make the window stay on top
         self.attributes("-transparentcolor", "gray8", "-topmost", True)
         # set the background image
-        self.psg = tk.PhotoImage(file="splash.png")
+        self.psg = tk.PhotoImage(
+            file=os.path.join(os.path.dirname(__file__), "data/splash.png")
+        )
         self.label = tk.Label(self, bg="gray8", image=self.psg)
         self.label.pack()
         # move the window to center
