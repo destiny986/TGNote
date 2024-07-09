@@ -24,7 +24,7 @@ import tkinter as tk
 from dotenv import dotenv_values
 from interception import auto_capture_devices, key_down, key_up
 from PIL import Image
-from pyautogui import ImageNotFoundException, locate, screenshot
+from pyautogui import ImageNotFoundException, locate, screenshot, size
 from pynput import keyboard
 from pyrogram import Client
 from pystray import Icon, Menu, MenuItem
@@ -55,11 +55,19 @@ def random_click(key):
 
 def wait_and_accept_several_buttons():
     """Поиск кнопок и подтверждение нажатия."""
-    buttons = [
-        os.path.join(os.path.dirname(__file__), "data/button1.png"),
-        os.path.join(os.path.dirname(__file__), "data/button2.png"),
-        os.path.join(os.path.dirname(__file__), "data/button3.png"),
-    ]
+    resolution = (size())
+    if resolution == (2560, 1440):
+        buttons = [
+            os.path.join(os.path.dirname(__file__), "data/button1.png"),
+            os.path.join(os.path.dirname(__file__), "data/button2.png"),
+            os.path.join(os.path.dirname(__file__), "data/button3.png"),
+        ]
+    elif resolution == (1600, 900):
+        buttons = [
+            os.path.join(os.path.dirname(__file__), "data/button1-1600x900.png"),
+            os.path.join(os.path.dirname(__file__), "data/button2-1600x900.png"),
+            os.path.join(os.path.dirname(__file__), "data/button3-1600x900.png"),
+        ]
     while 1:
         try:
             temp_scr = screenshot()
