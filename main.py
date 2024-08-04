@@ -1,3 +1,4 @@
+## Nuitka 2.3.11
 # nuitka-project: --mingw64
 # nuitka-project: --onefile
 # nuitka-project: --windows-console-mode=disable
